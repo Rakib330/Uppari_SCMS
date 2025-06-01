@@ -2,7 +2,7 @@
 {
     public class PurchaseOrder : BaseModel
     {
-        public int PurchaseOrderId { get; set; }
-        public string? PurchaseOrderName { get; set; }
+        public int Id { get; set; }
+        public string? Name { get; set; }
     }
 }

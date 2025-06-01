@@ -1,0 +1,120 @@
+﻿@page "/vendors"
+@inject AppDbContext Db
+@using Microsoft.EntityFrameworkCore
+@using Uppari_SCMS.Data
+@using Uppari_SCMS.Data.Models
+
+<h3>Vendor List</h3>
+
+<button class="btn btn-primary" @onclick="CreateVendor">Add Vendor</button>
+
+<table class="table table-bordered mt-3">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var vendor in vendors)
+        {
+            <tr>
+                <td>@vendor.Name</td>
+                <td>@vendor.Phone</td>
+                <td>@vendor.Email</td>
+                <td>
+                    <button class="btn btn-sm btn-warning" @onclick="() => EditVendor(vendor)">Edit</button>
+                    <button class="btn btn-sm btn-danger" @onclick="() => DeleteVendor(vendor.Id)">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (editingVendor != null)
+{
+    <EditForm Model="editingVendor" OnValidSubmit="SaveVendor">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label>Name</label>
+            <InputText class="form-control" @bind-Value="editingVendor.Name" />
+        </div>
+        <div class="form-group">
+            <label>Phone</label>
+            <InputText class="form-control" @bind-Value="editingVendor.Phone" />
+        </div>
+        <div class="form-group">
+            <label>Email</label>
+            <InputText class="form-control" @bind-Value="editingVendor.Email" />
+        </div>
+        <button class="btn btn-success">Save</button>
+        <button class="btn btn-secondary" type="button" @onclick="Cancel">Cancel</button>
+    </EditForm>
+}
+
+@code {
+    List<Vendor> vendors = new();
+    Vendor? editingVendor;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadVendors();
+    }
+
+    async Task LoadVendors()
+    {
+        vendors = await Db.Vendors.ToListAsync();
+    }
+
+    void CreateVendor()
+    {
+        editingVendor = new Vendor();
+    }
+
+    void EditVendor(Vendor vendor)
+    {
+        editingVendor = new Vendor
+        {
+            Id = vendor.Id,
+            Name = vendor.Name,
+            Phone = vendor.Phone,
+            Email = vendor.Email
+        };
+    }
+
+    async Task SaveVendor()
+    {
+        if (editingVendor!.Id == 0)
+        {
+            Db.Vendors.Add(editingVendor);
+        }
+        else
+        {
+            Db.Vendors.Update(editingVendor);
+        }
+
+        await Db.SaveChangesAsync();
+        editingVendor = null;
+        await LoadVendors();
+    }
+
+    async Task DeleteVendor(int id)
+    {
+        var vendor = await Db.Vendors.FindAsync(id);
+        if (vendor != null)
+        {
+            Db.Vendors.Remove(vendor);
+            await Db.SaveChangesAsync();
+            await LoadVendors();
+        }
+    }
+
+    void Cancel()
+    {
+        editingVendor = null;
+    }
+}

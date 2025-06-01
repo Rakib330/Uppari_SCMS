@@ -2,7 +2,7 @@
 {
     public class Item : BaseModel
     {
-        public int ItemId { get; set; }
-        public string? ItemName { get; set; }
+        public int Id { get; set; }
+        public string? Name { get; set; }
     }
 }
