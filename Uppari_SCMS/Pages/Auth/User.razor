@@ -1,0 +1,54 @@
+﻿@page "/users"
+@attribute [Authorize]
+@using Uppari_SCMS.Data.Auth
+@inject UserManager<ApplicationUser> UserManager
+
+<h3>User List</h3>
+
+@if (users == null)
+{
+    <p>Loading...</p>
+}
+else if (!users.Any())
+{
+    <p>No users found.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>User Name</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in users)
+            {
+                <tr>
+                    <td>@user.Email</td>
+                    <td>@user.UserName</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" @onclick="() => ManageRoles(user.Id)">Manage Roles</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<ApplicationUser>? users;
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = UserManager.Users.ToList(); // if using ApplicationUser, use .Select(u => new ApplicationUser { ... }).ToList();
+    }
+
+    private void ManageRoles(string userId)
+    {
+        // Navigate to role management or open a modal
+        Console.WriteLine($"Manage roles for user {userId}");
+    }
+}

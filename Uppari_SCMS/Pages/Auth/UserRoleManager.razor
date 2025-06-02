@@ -1,0 +1,114 @@
+﻿@using Uppari_SCMS.Data.Auth
+@inject UserManager<ApplicationUser> UserManager
+@inject RoleManager<IdentityRole> RoleManager
+@page "/rolemanagers"
+@attribute [Authorize]
+
+<h3>User Role Management</h3>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>User</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in users)
+        {
+            <tr>
+                <td>@user.UserName</td>
+                <td>
+                    <button class="btn btn-sm btn-info" @onclick="() => LoadRoles(user.Id)">Manage Roles</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!string.IsNullOrEmpty(selectedUserId))
+{
+    <div class="card p-3 mt-3">
+        <h5>Roles for @selectedUserName</h5>
+        <div class="mb-2">
+            <select @bind="selectedRole" class="form-select">
+                <option value="">-- Select Role --</option>
+                @foreach (var role in roles)
+                {
+                    <option value="@role.Name">@role.Name</option>
+                }
+            </select>
+        </div>
+        <button class="btn btn-success mb-3" @onclick="AddRoleToUser">Add Role</button>
+
+        <ul class="list-group">
+            @foreach (var role in userRoles)
+            {
+                <li class="list-group-item d-flex justify-content-between">
+                    @role
+                    <button class="btn btn-danger btn-sm" @onclick="() => RemoveRoleFromUser(role)">Remove</button>
+                </li>
+            }
+        </ul>
+    </div>
+}
+
+@code {
+    private List<ApplicationUser> users = new();
+    private List<IdentityRole> roles = new();
+    private List<string> userRoles = new();
+
+    private string? selectedUserId;
+    private string? selectedUserName;
+    private string? selectedRole;
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await UserManager.Users.ToListAsync();
+        roles = await RoleManager.Roles.ToListAsync();
+    }
+
+    private async Task LoadRoles(string userId)
+    {
+        selectedUserId = userId;
+        var user = await UserManager.FindByIdAsync(userId);
+        if (user != null)
+        {
+            selectedUserName = user.UserName;
+            userRoles = (await UserManager.GetRolesAsync(user)).ToList();
+            selectedRole = null;
+        }
+    }
+
+    private async Task AddRoleToUser()
+    {
+        if (string.IsNullOrEmpty(selectedUserId) || string.IsNullOrEmpty(selectedRole))
+            return;
+
+        var user = await UserManager.FindByIdAsync(selectedUserId);
+        if (user != null && !(await UserManager.IsInRoleAsync(user, selectedRole)))
+        {
+            var result = await UserManager.AddToRoleAsync(user, selectedRole);
+            if (result.Succeeded)
+            {
+                await LoadRoles(selectedUserId); // Refresh roles
+            }
+        }
+    }
+
+    private async Task RemoveRoleFromUser(string role)
+    {
+        if (string.IsNullOrEmpty(selectedUserId))
+            return;
+
+        var user = await UserManager.FindByIdAsync(selectedUserId);
+        if (user != null)
+        {
+            var result = await UserManager.RemoveFromRoleAsync(user, role);
+            if (result.Succeeded)
+            {
+                await LoadRoles(selectedUserId); // Refresh roles
+            }
+        }
+    }
+}

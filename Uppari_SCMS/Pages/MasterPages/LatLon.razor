@@ -1,0 +1,32 @@
+﻿@inject IJSRuntime JS
+@page "/latlon"
+<button @onclick="GetLocation">Get My Location</button>
+
+<p>Latitude: @latitude</p>
+<p>Longitude: @longitude</p>
+
+@code {
+    private string? latitude;
+    private string? longitude;
+
+    private async Task GetLocation()
+    {
+        try
+        {
+            var location = await JS.InvokeAsync<GeoLocation>("getUserLocation");
+            latitude = location.latitude.ToString();
+            longitude = location.longitude.ToString();
+        }
+        catch (Exception ex)
+        {
+            latitude = "Error";
+            longitude = ex.Message;
+        }
+    }
+
+    public class GeoLocation
+    {
+        public double latitude { get; set; }
+        public double longitude { get; set; }
+    }
+}

@@ -1,0 +1,57 @@
+﻿@page "/register-user"
+@inject UserManager<ApplicationUser> UserManager
+@attribute [Authorize]
+
+<h3>Register New User</h3>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="alert alert-info">@message</div>
+}
+
+<EditForm Model="newUser" OnValidSubmit="RegisterUserAsync">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label>Email</label>
+        <InputText @bind-Value="newUser.Email" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label>Password</label>
+        <InputText @bind-Value="newUser.Password" type="password" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Register</button>
+</EditForm>
+
+@code {
+    private RegisterModel newUser = new();
+    private string? message;
+
+    private async Task RegisterUserAsync()
+    {
+        var user = new ApplicationUser { UserName = newUser.Email, Email = newUser.Email };
+        var result = await UserManager.CreateAsync(user, newUser.Password);
+
+        if (result.Succeeded)
+        {
+            message = "User registered successfully.";
+            NavigationManager.NavigateTo("/users");
+        }
+        else
+        {
+            message = string.Join(", ", result.Errors.Select(e => e.Description));
+        }
+    }
+
+    public class RegisterModel
+    {
+        [Required, EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [Required, MinLength(5)]
+        public string Password { get; set; } = string.Empty;
+    }
+}

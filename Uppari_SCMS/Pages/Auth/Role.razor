@@ -1,0 +1,64 @@
+﻿@using Microsoft.AspNetCore.Identity  
+@inject RoleManager<IdentityRole> RoleManager  
+@inject NavigationManager Navigation 
+@page "/roles"
+@attribute [Authorize]
+
+<h3>Role Management</h3>  
+
+<input @bind="newRole" placeholder="Enter role name..." class="form-control" />  
+<button @onclick="AddRole" class="btn btn-success mt-2">Add Role</button>  
+
+<table class="table mt-3">  
+    <thead>  
+        <tr>  
+            <th>Role Name</th>  
+            <th>Actions</th>  
+        </tr>  
+    </thead>  
+    <tbody>  
+        @foreach (var role in roles)  
+        {  
+            <tr>  
+                <td>@role.Name</td>  
+                <td>  
+                    <button class="btn btn-danger btn-sm" @onclick="() => DeleteRole(role.Id)">Delete</button>  
+                </td>  
+            </tr>  
+        }  
+    </tbody>  
+</table>  
+
+@code {  
+    private List<IdentityRole> roles = new();  
+    private string newRole = "";  
+
+    protected override async Task OnInitializedAsync()  
+    {  
+        roles = await Task.Run(() => RoleManager.Roles.ToList());  
+    }  
+
+    private async Task AddRole()  
+    {  
+        if (!string.IsNullOrWhiteSpace(newRole))  
+        {  
+            var roleExists = await RoleManager.RoleExistsAsync(newRole);  
+            if (!roleExists)  
+            {  
+                await RoleManager.CreateAsync(new IdentityRole(newRole));  
+                newRole = "";  
+                roles = await Task.Run(() => RoleManager.Roles.ToList()); // Refresh  
+            }  
+        }  
+    }  
+
+    private async Task DeleteRole(string roleId)  
+    {  
+        var role = await RoleManager.FindByIdAsync(roleId);  
+        if (role != null)  
+        {  
+            await RoleManager.DeleteAsync(role);  
+            roles = await Task.Run(() => RoleManager.Roles.ToList()); // Refresh  
+        }  
+    }  
+}
